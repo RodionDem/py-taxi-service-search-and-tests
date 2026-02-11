@@ -1,13 +1,12 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import generic
-from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .models import Driver, Car, Manufacturer
-
-from .forms import (
+from taxi.models import Driver, Car, Manufacturer
+from taxi.forms import (
     DriverCreationForm,
     DriverLicenseUpdateForm,
     CarForm,
@@ -45,9 +44,8 @@ class ManufacturerListView(LoginRequiredMixin, generic.ListView):
         if form.is_valid():
             name = form.cleaned_data["name"]
             if name:
-                queryset = queryset.filter(
-                    name__icontains=name
-                )
+                queryset = queryset.filter(name__icontains=name)
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -86,10 +84,10 @@ class CarListView(LoginRequiredMixin, generic.ListView):
         queryset = super().get_queryset()
         form = CarSearchForm(self.request.GET)
         if form.is_valid():
-            model = form.cleaned_data["model"]
-            if model:
+            model_name = form.cleaned_data["model"]
+            if model_name:
                 queryset = queryset.filter(
-                    model__icontains=model
+                    model__icontains=model_name
                 )
         return queryset
 
@@ -151,7 +149,7 @@ class DriverListView(LoginRequiredMixin, generic.ListView):
 
 class DriverDetailView(LoginRequiredMixin, generic.DetailView):
     model = Driver
-    queryset = Driver.objects.all().prefetch_related(
+    queryset = Driver.objects.prefetch_related(
         "cars__manufacturer"
     )
 
@@ -174,12 +172,12 @@ class DriverDeleteView(LoginRequiredMixin, generic.DeleteView):
 
 @login_required
 def toggle_assign_to_car(request, pk):
-    driver = Driver.objects.get(id=request.user.id)
-    car = Car.objects.get(id=pk)
+    driver = request.user
+    car = get_object_or_404(Car, pk=pk)
     if car in driver.cars.all():
-        driver.cars.remove(pk)
+        driver.cars.remove(car)
     else:
-        driver.cars.add(pk)
+        driver.cars.add(car)
     return HttpResponseRedirect(
         reverse_lazy("taxi:car-detail", args=[pk])
     )

@@ -1,5 +1,12 @@
 from django.test import TestCase
-from taxi.forms import DriverCreationForm, CarForm, DriverLicenseUpdateForm, DriverSearchForm, CarSearchForm, ManufacturerSearchForm
+from taxi.forms import (
+    DriverCreationForm,
+    CarForm,
+    DriverLicenseUpdateForm,
+    DriverSearchForm,
+    CarSearchForm,
+    ManufacturerSearchForm
+)
 from taxi.models import Manufacturer, Driver
 
 
@@ -25,7 +32,7 @@ class FormsTest(TestCase):
     def test_car_form_valid(self):
         form = CarForm(data={
             "model": "Camry",
-            "manufacturer": self.manufacturer.id,  # важливо передати ID обʼєкта
+            "manufacturer": self.manufacturer.id,
         })
         self.assertTrue(form.is_valid())
 
